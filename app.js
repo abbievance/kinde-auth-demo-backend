@@ -23,6 +23,8 @@ app.use((req, res, next) => {
   );
   next();
 });
+
+
 app.use(express.static("public"));
 const config = {
   grantType: GrantType.AUTHORIZATION_CODE,
@@ -62,10 +64,50 @@ const log = (req, res, next) =>{
 }
 
 
-app.get("/protected", log, verifier,  (req, res) => {
+app.get("/protected", verifier, (req, res) => {
+  console.log(req.user)
   res.send("yay :)")
+});
+
+app.get("/unprotected", getUser, (req, res) => {
+  console.log(req.user)
+  res.send()
 });
 
 app.listen(port, function () {
   console.log(`Kinde Express Starter Kit listening on port ${port}!`);
 });
+
+app.get('/users', async (req, res) => {
+  const data = await fetch(`https://testsitefortesting.kinde.com/oauth2/token`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      audience: process.env.API_AUDIENCE,
+      grant_type: process.env.API_GRANT_TYPE,
+      client_id: process.env.API_KINDE_CLIENT_ID ,
+      client_secret: process.env.API_KINDE_CLIENT_SECRET ,
+    })
+  })
+  const token = await data.json()
+  console.log(token.access_token)
+  res.send('yay');
+  const headers = {
+    'Accept':'application/json',
+    'Authorization':`Bearer ${token.access_token}`
+  };
+  
+  fetch('https://testsitefortesting.kinde.com/api/v1/users',
+  {
+    method: 'GET',
+  
+    headers: headers
+  })
+  .then(function(res) {
+      return res.json();
+  }).then(function(body) {
+      console.log(body);
+  });
+})
